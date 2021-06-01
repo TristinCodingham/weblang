@@ -17,10 +17,14 @@ async function main() {
     parser.feed(code);
     if(parser.results.length > 1) {
         console.warn("Parser generated multiple trees!");
+        return;
+    } else if(parser.results.length < 1) {
+        console.warn("Parser generated 0 trees!");
+        return;
     } else {
         const ast = parser.results[0];
         await fs.writeFile(output, JSON.stringify(ast, null, " "));
-        console.log(`Generated asset: ${output}`);
+        console.log(`Parsed asset: ${output}`);
     }
 }
 

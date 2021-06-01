@@ -1,8 +1,11 @@
-var myString = "Test"
-var myNum = 123
-var newNum = myNum + 2
-var myArr = [1, "2", three]
-var myFunc = (a, b) => {
+title myTitle = "Components!"
+script myScript = "./scripts/script"
+stylesheet = "./styles/style.css"
+metas = { name: "viewport" }
+dyn myNum=123
+dyn newNum = myNum + 2
+dyn myArr = [1, "2", three]
+dyn myFunc = (a, b) => {
     a + b
 }
 1 + 2

@@ -7,56 +7,35 @@ function id(x) { return x[0]; }
 var grammar = {
     Lexer: lexer,
     ParserRules: [
-    {"name": "inputs", "symbols": ["inputs", "input"], "postprocess": 
-        (data) => [...data[0], data[1]]
-            },
-    {"name": "inputs", "symbols": ["input"], "postprocess": 
-        (data) => [data[0]]
-            },
-    {"name": "input", "symbols": ["statements"], "postprocess": 
-        (data) => {
-            return {
-                type: "statements",
-                data: data[0]
-            }
-        }
-            },
-    {"name": "input", "symbols": ["expressions"], "postprocess": 
-        (data) => {
-            return {
-                type: "expressions",
-                data: data[0]
-            }
-        }
-            },
     {"name": "statements", "symbols": ["_", "statements", (lexer.has("newline") ? {type: "newline"} : newline), "statement"], "postprocess": 
         (data) => [...data[1], data[3]]
             },
     {"name": "statements", "symbols": ["_", "statement"], "postprocess": 
         (data) => [data[1]]
             },
-    {"name": "expressions", "symbols": ["_", "expressions", (lexer.has("newline") ? {type: "newline"} : newline), "expression"], "postprocess": 
-        (data) => [...data[1], data[3]]
-            },
-    {"name": "expressions", "symbols": ["_", "expression"], "postprocess": 
-        (data) => [data[1]]
-            },
-    {"name": "statement", "symbols": ["assignment_literal"], "postprocess": 
-        (data) => {
-            return {
-                type: "assignment_literal",
-                data: data[0]
-            }
-        }
-            },
-    {"name": "expression", "symbols": ["arithmetic_expression"]},
+    {"name": "statement", "symbols": ["assignment"], "postprocess": id},
+    {"name": "statement", "symbols": ["expression"], "postprocess": id},
+    {"name": "assignment", "symbols": ["assignment_literal"], "postprocess": id},
+    {"name": "expression", "symbols": ["arithmetic_expression"], "postprocess": id},
     {"name": "assignment_literal", "symbols": [(lexer.has("keyword") ? {type: "keyword"} : keyword), "__", "identifiers", "_", {"literal":"="}, "_", "literal"], "postprocess": 
         (data) => {
             return {
-                type: data[0],
+                type: "assignment_literal",
                 data: {
-                    identifier_list: [...data[2]],
+                    keyword: data[0],
+                    identifiers: [...data[2]],
                     literal: data[6]
+                }
+            }
+        }
+            },
+    {"name": "arithmetic_expression", "symbols": ["arithmetic_operand", "_", "arithmetic_operator", "_", "arithmetic_operand"], "postprocess": 
+        (data) => {
+            return {
+                type: "arithmetic_expression",
+                data: {
+                    operands: [data[0], data[4]],
+                    operator: data[2]
                 }
             }
         }
@@ -114,7 +93,6 @@ var grammar = {
             }
         }
             },
-    {"name": "arithmetic_expression", "symbols": ["arithmetic_operand", "_", "arithmetic_operator", "_", "arithmetic_operand"]},
     {"name": "arithmetic_operand", "symbols": [(lexer.has("number") ? {type: "number"} : number)], "postprocess": id},
     {"name": "arithmetic_operand", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier)], "postprocess": id},
     {"name": "arithmetic_operator", "symbols": [{"literal":"/"}]},
@@ -122,7 +100,7 @@ var grammar = {
     {"name": "arithmetic_operator", "symbols": [{"literal":"+"}]},
     {"name": "arithmetic_operator", "symbols": [{"literal":"-"}]},
     {"name": "arithmetic_operator", "symbols": [{"literal":"%"}]},
-    {"name": "block_statement", "symbols": [{"literal":"{"}, (lexer.has("newline") ? {type: "newline"} : newline), "inputs", (lexer.has("newline") ? {type: "newline"} : newline), {"literal":"}"}], "postprocess": 
+    {"name": "block_statement", "symbols": [{"literal":"{"}, (lexer.has("newline") ? {type: "newline"} : newline), "statements", (lexer.has("newline") ? {type: "newline"} : newline), {"literal":"}"}], "postprocess": 
         (data) => {
             return {
                 type: "block_statement",
@@ -130,18 +108,20 @@ var grammar = {
             }
         }
             },
-    {"name": "params", "symbols": ["params", "_", {"literal":","}, "_", "literal"], "postprocess": 
+    {"name": "params", "symbols": ["params", "_", "delimeter", "_", "literal"], "postprocess": 
         (data) => [...data[0], data[4]]
             },
     {"name": "params", "symbols": ["literal"], "postprocess": 
         (data) => [data[0]]
             },
     {"name": "params", "symbols": []},
+    {"name": "delimeter", "symbols": [{"literal":","}]},
+    {"name": "delimeter", "symbols": ["__"]},
     {"name": "__", "symbols": [(lexer.has("wspace") ? {type: "wspace"} : wspace)]},
     {"name": "_", "symbols": ["__"]},
     {"name": "_", "symbols": []}
 ]
-  , ParserStart: "inputs"
+  , ParserStart: "statements"
 }
 if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
    module.exports = grammar;

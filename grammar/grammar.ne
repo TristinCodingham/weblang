@@ -3,34 +3,7 @@
 %}
 
 @lexer lexer
-inputs
-    -> inputs input
-    {%
-        (data) => [...data[0], data[1]]
-    %}
-    | input
-    {%
-        (data) => [data[0]]
-    %}
-input
-    -> statements
-    {%
-        (data) => {
-            return {
-                type: "statements",
-                data: data[0]
-            }
-        }
-    %}
-    | expressions
-    {%
-        (data) => {
-            return {
-                type: "expressions",
-                data: data[0]
-            }
-        }
-    %}
+
 statements
     -> _ statements %newline statement
     {%
@@ -40,40 +13,46 @@ statements
     {%
         (data) => [data[1]]
     %}
-expressions
-    -> _ expressions %newline expression
-    {%
-        (data) => [...data[1], data[3]]
-    %}
-    | _ expression
-    {%
-        (data) => [data[1]]
-    %}
 statement
-    -> assignment_literal
-    {%
-        (data) => {
-            return {
-                type: "assignment_literal",
-                data: data[0]
-            }
-        }
-    %}
+    -> assignment {% id %}
+    | expression {% id %}
+assignment
+    -> assignment_literal {% id %}
 expression
-    -> arithmetic_expression
+    -> arithmetic_expression {% id %}
+
+
+
 assignment_literal
     -> %keyword __ identifiers _ "=" _ literal
     {%
         (data) => {
             return {
-                type: data[0],
+                type: "assignment_literal",
                 data: {
-                    identifier_list: [...data[2]],
+                    keyword: data[0],
+                    identifiers: [...data[2]],
                     literal: data[6]
                 }
             }
         }
     %}
+arithmetic_expression
+    -> arithmetic_operand _ arithmetic_operator _ arithmetic_operand
+    {%
+        (data) => {
+            return {
+                type: "arithmetic_expression",
+                data: {
+                    operands: [data[0], data[4]],
+                    operator: data[2]
+                }
+            }
+        }
+    %}
+
+
+
 identifiers
     -> identifiers _ "," _ %identifier
     {%
@@ -93,9 +72,6 @@ literal
     | object_literal {% id %}
     | arithmetic_expression {% id %}
     | null
-
-
-
 function_call
     -> %identifier _ "(" _ params _ ")"
     {%
@@ -142,8 +118,7 @@ object_literal
             }
         }
     %}
-arithmetic_expression
-    -> arithmetic_operand _ arithmetic_operator _ arithmetic_operand
+
 arithmetic_operand
     -> %number {% id %}
     | %identifier {% id %}
@@ -154,9 +129,8 @@ arithmetic_operator
     | "-"
     | "%"
 
-
 block_statement
-    -> "{" %newline inputs %newline "}"
+    -> "{" %newline statements %newline "}"
     {%
         (data) => {
             return {
@@ -167,7 +141,7 @@ block_statement
     %}
 
 params
-    -> params _ "," _ literal
+    -> params _ delimeter _ literal
     {%
         (data) => [...data[0], data[4]]
     %}
@@ -177,5 +151,8 @@ params
     %}
     | null
 
+delimeter
+    -> ","
+    | __
 __ -> %wspace
 _ -> __ | null

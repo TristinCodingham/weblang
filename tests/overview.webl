@@ -1,0 +1,51 @@
+<head>
+    title myTitle = "Components!"
+    script myScript = "./scripts/script"
+    stylesheet = "./styles/style.css"
+    metas = [ { name: "viewport" } ]
+
+    // optional
+    dyn myNum=123
+    dyn newNum = myNum + 2
+    dyn myArr = [1, "2", three]
+    dyn myFunc = (a, b) => {
+        a + b
+    }
+    1 + 2
+</head>
+<body>
+    dyn myNum=123
+    dyn newNum = myNum + 2
+    dyn myArr = [1, "2", three]
+    dyn myFunc = (a, b) => {
+        a + b
+    }
+    1 + 2
+    <header>
+        <component />
+        <component />
+        <component />
+        <component />
+    </header>
+
+    <content>
+        <component />
+        <component />
+        <component />
+        <component />
+        dyn myNum=123
+        dyn newNum = myNum + 2
+        dyn myArr = [1, "2", three]
+        dyn myFunc = (a, b) => {
+            a + b
+        }
+        1 + 2
+    </content>
+
+    <footer>
+        <component />
+        <component />
+        <component />
+        <component />
+    </footer>
+</body>

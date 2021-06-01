@@ -10,6 +10,8 @@ async function main() {
     }
     
     const astJson = (await fs.readFile(path.normalize(filename))).toString();
+    if(!astJson)
+        return;
     const inputs = JSON.parse(astJson);
     const jsCode = generator(inputs);
     await fs.writeFile(outputPath, jsCode);
