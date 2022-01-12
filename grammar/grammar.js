@@ -7,119 +7,57 @@ function id(x) { return x[0]; }
 var grammar = {
     Lexer: lexer,
     ParserRules: [
-    {"name": "statements", "symbols": ["_", "statements", (lexer.has("newline") ? {type: "newline"} : newline), "statement"], "postprocess": 
-        (data) => [...data[1], data[3]]
+    {"name": "statements$ebnf$1", "symbols": ["statement"]},
+    {"name": "statements$ebnf$1", "symbols": ["statements$ebnf$1", "statement"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "statements", "symbols": ["statements$ebnf$1"]},
+    {"name": "statement$ebnf$1", "symbols": [(lexer.has("comment") ? {type: "comment"} : comment)], "postprocess": id},
+    {"name": "statement$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "statement", "symbols": ["_", "statement_type", "statement$ebnf$1", "nl"], "postprocess": 
+        (data) => data[1]
             },
-    {"name": "statements", "symbols": ["_", "statement"], "postprocess": 
-        (data) => [data[1]]
+    {"name": "statement_type", "symbols": ["assignment_statement"], "postprocess": id},
+    {"name": "statement_type", "symbols": ["comment_statement"]},
+    {"name": "assignment_statement$ebnf$1", "symbols": ["identifier"]},
+    {"name": "assignment_statement$ebnf$1", "symbols": ["assignment_statement$ebnf$1", "identifier"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "assignment_statement", "symbols": [(lexer.has("keyword") ? {type: "keyword"} : keyword), "_", "assignment_statement$ebnf$1", "_", {"literal":"="}, "_", "assignable"], "postprocess": 
+        (data) => [data[0], data[2], data[6]]
             },
-    {"name": "statement", "symbols": ["assignment"], "postprocess": id},
-    {"name": "statement", "symbols": ["expression"], "postprocess": id},
-    {"name": "assignment", "symbols": ["assignment_literal"], "postprocess": id},
-    {"name": "expression", "symbols": ["arithmetic_expression"], "postprocess": id},
-    {"name": "assignment_literal", "symbols": [(lexer.has("keyword") ? {type: "keyword"} : keyword), "__", "identifiers", "_", {"literal":"="}, "_", "literal"], "postprocess": 
-        (data) => {
-            return {
-                type: "assignment_literal",
-                data: {
-                    keyword: data[0],
-                    identifiers: [...data[2]],
-                    literal: data[6]
-                }
-            }
-        }
+    {"name": "identifier", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier), "_", {"literal":","}, "_", (lexer.has("identifier") ? {type: "identifier"} : identifier)], "postprocess": 
+        (data) => [data[0], data[4]]
             },
-    {"name": "arithmetic_expression", "symbols": ["arithmetic_operand", "_", "arithmetic_operator", "_", "arithmetic_operand"], "postprocess": 
-        (data) => {
-            return {
-                type: "arithmetic_expression",
-                data: {
-                    operands: [data[0], data[4]],
-                    operator: data[2]
-                }
-            }
-        }
-            },
-    {"name": "identifiers", "symbols": ["identifiers", "_", {"literal":","}, "_", (lexer.has("identifier") ? {type: "identifier"} : identifier)], "postprocess": 
-        (data) => [...data[0], data[4]]
-            },
-    {"name": "identifiers", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier)], "postprocess": 
-        (data) => [data[0]]
-            },
-    {"name": "literal", "symbols": [(lexer.has("number") ? {type: "number"} : number)], "postprocess": id},
+    {"name": "identifier", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier)], "postprocess": id},
+    {"name": "assignable", "symbols": ["literal"]},
     {"name": "literal", "symbols": [(lexer.has("string") ? {type: "string"} : string)], "postprocess": id},
+    {"name": "literal", "symbols": [(lexer.has("number") ? {type: "number"} : number)], "postprocess": id},
+    {"name": "literal", "symbols": [(lexer.has("bool") ? {type: "bool"} : bool)], "postprocess": id},
     {"name": "literal", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier)], "postprocess": id},
-    {"name": "literal", "symbols": ["function_call"], "postprocess": id},
-    {"name": "literal", "symbols": ["function_literal"], "postprocess": id},
-    {"name": "literal", "symbols": ["array_literal"], "postprocess": id},
     {"name": "literal", "symbols": ["object_literal"], "postprocess": id},
-    {"name": "literal", "symbols": ["arithmetic_expression"], "postprocess": id},
-    {"name": "literal", "symbols": []},
-    {"name": "function_call", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier), "_", {"literal":"("}, "_", "params", "_", {"literal":")"}], "postprocess": 
-        (data) => {
-            return {
-                type: "function_call",
-                data: {
-                    identifier: data[0],
-                    params: data[4]
-                }
-            }
-        }
+    {"name": "literal", "symbols": ["array_literal"], "postprocess": id},
+    {"name": "object_literal$ebnf$1", "symbols": []},
+    {"name": "object_literal$ebnf$1", "symbols": ["object_literal$ebnf$1", "object"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "object_literal", "symbols": [{"literal":"{"}, "_", "nl", "object_literal$ebnf$1", "_", {"literal":"}"}], "postprocess": 
+        (data) => data[3]
             },
-    {"name": "function_literal", "symbols": [{"literal":"("}, "_", "params", "_", {"literal":")"}, "_", {"literal":"=>"}, "_", "block_statement"], "postprocess": 
-        (data) => {
-            return {
-                type: "function_literal",
-                data: {
-                    params: data[2],
-                    block: data[8]
-                }
-            }
-        }
+    {"name": "object", "symbols": ["_", (lexer.has("identifier") ? {type: "identifier"} : identifier), "_", {"literal":":"}, "_", "literal", "nl"], "postprocess": 
+        (data) => [data[1], data[5]]
             },
-    {"name": "array_literal", "symbols": [{"literal":"["}, "_", "params", "_", {"literal":"]"}], "postprocess": 
-        (data) => {
-            return {
-                type: "array_literal",
-                data: data[2]
-            }
-        }
+    {"name": "array_literal$ebnf$1", "symbols": []},
+    {"name": "array_literal$ebnf$1", "symbols": ["array_literal$ebnf$1", "array"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "array_literal", "symbols": [{"literal":"["}, "_", "nl", "array_literal$ebnf$1", "_", {"literal":"]"}], "postprocess": 
+        (data) => data[3]
             },
-    {"name": "object_literal", "symbols": [{"literal":"{"}, "_", "params", "_", {"literal":"}"}], "postprocess": 
-        (data) => {
-            return {
-                type: "object_literal",
-                data: data[2]
-            }
-        }
+    {"name": "array$ebnf$1", "symbols": [{"literal":","}], "postprocess": id},
+    {"name": "array$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "array", "symbols": ["_", "literal", "_", "array$ebnf$1", "_", "nl"], "postprocess": 
+        (data) => data[1]
             },
-    {"name": "arithmetic_operand", "symbols": [(lexer.has("number") ? {type: "number"} : number)], "postprocess": id},
-    {"name": "arithmetic_operand", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier)], "postprocess": id},
-    {"name": "arithmetic_operator", "symbols": [{"literal":"/"}]},
-    {"name": "arithmetic_operator", "symbols": [{"literal":"*"}]},
-    {"name": "arithmetic_operator", "symbols": [{"literal":"+"}]},
-    {"name": "arithmetic_operator", "symbols": [{"literal":"-"}]},
-    {"name": "arithmetic_operator", "symbols": [{"literal":"%"}]},
-    {"name": "block_statement", "symbols": [{"literal":"{"}, (lexer.has("newline") ? {type: "newline"} : newline), "statements", (lexer.has("newline") ? {type: "newline"} : newline), {"literal":"}"}], "postprocess": 
-        (data) => {
-            return {
-                type: "block_statement",
-                data: data[2]
-            }
-        }
-            },
-    {"name": "params", "symbols": ["params", "_", "delimeter", "_", "literal"], "postprocess": 
-        (data) => [...data[0], data[4]]
-            },
-    {"name": "params", "symbols": ["literal"], "postprocess": 
-        (data) => [data[0]]
-            },
-    {"name": "params", "symbols": []},
-    {"name": "delimeter", "symbols": [{"literal":","}]},
-    {"name": "delimeter", "symbols": ["__"]},
-    {"name": "__", "symbols": [(lexer.has("wspace") ? {type: "wspace"} : wspace)]},
-    {"name": "_", "symbols": ["__"]},
-    {"name": "_", "symbols": []}
+    {"name": "comment_statement", "symbols": ["_", (lexer.has("comment") ? {type: "comment"} : comment), "_"]},
+    {"name": "_$ebnf$1", "symbols": [(lexer.has("wspace") ? {type: "wspace"} : wspace)], "postprocess": id},
+    {"name": "_$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "_", "symbols": ["_$ebnf$1"]},
+    {"name": "nl$ebnf$1", "symbols": [(lexer.has("newline") ? {type: "newline"} : newline)], "postprocess": id},
+    {"name": "nl$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "nl", "symbols": ["nl$ebnf$1"]}
 ]
   , ParserStart: "statements"
 }

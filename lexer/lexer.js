@@ -1,8 +1,10 @@
 const moo = require('moo')
  
 module.exports = lexer = moo.compile({
-    keyword: ['webapp', 'page', 'import', 'head', 'body', 'title', 'stylesheet', 'script', 'header', 'content', 'footer', 'list', 'image', 'dyn', 'block', 'if', 'or', 'in', 'loop', 'loopback', 'count', 'final', 'return', 'switch'],
+    keyword: ['use', 'head', 'body', 'title', 'stylesheet', 'meta', 'header', 'content', 'footer', 'list', 'image', 'dyn', 'block', 'if', 'or', 'in', 'loop', 'loopback', 'count', 'final', 'return', 'switch'],
+    bool: /true|false/,
     identifier: /[a-zA-Z][a-zA-Z_0-9]*/,
+    comment: /\/\/.*?$/,
     lparen:  '(',
     rparen:  ')',
     lbrace:  '{',
@@ -32,9 +34,9 @@ module.exports = lexer = moo.compile({
     godo: '=>',
     assign: '=',
     comma: ',',
+    colon: ':',
     wspace:  /[ \t]+/,
     number:  /(?:0|[1-9][0-9_]*)/,
     string:  /"(?:\\["\\]|[^\n"\\])*"/,
     newline: { match: /\r\n/, lineBreaks: true },
-    comment: /\/\/.*?$/,
 });

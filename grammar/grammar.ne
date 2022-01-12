@@ -4,155 +4,70 @@
 
 @lexer lexer
 
+# Entry
 statements
-    -> _ statements %newline statement
-    {%
-        (data) => [...data[1], data[3]]
-    %}
-    | _ statement
-    {%
-        (data) => [data[1]]
-    %}
+    -> statement:+
+
 statement
-    -> assignment {% id %}
-    | expression {% id %}
-assignment
-    -> assignment_literal {% id %}
-expression
-    -> arithmetic_expression {% id %}
-
-
-
-assignment_literal
-    -> %keyword __ identifiers _ "=" _ literal
+    -> _ statement_type %comment:? nl
     {%
-        (data) => {
-            return {
-                type: "assignment_literal",
-                data: {
-                    keyword: data[0],
-                    identifiers: [...data[2]],
-                    literal: data[6]
-                }
-            }
-        }
-    %}
-arithmetic_expression
-    -> arithmetic_operand _ arithmetic_operator _ arithmetic_operand
-    {%
-        (data) => {
-            return {
-                type: "arithmetic_expression",
-                data: {
-                    operands: [data[0], data[4]],
-                    operator: data[2]
-                }
-            }
-        }
+        (data) => data[1]
     %}
 
+statement_type
+    -> assignment_statement {% id %}
+    | comment_statement
 
+assignment_statement
+    -> %keyword _ identifier:+ _ "=" _ assignable
+    {%
+        (data) => [data[0], data[2], data[6]]
+    %}
 
-identifiers
-    -> identifiers _ "," _ %identifier
+identifier
+    -> %identifier _ "," _ %identifier
     {%
-        (data) => [...data[0], data[4]]
+        (data) => [data[0], data[4]]
     %}
-    | %identifier
-    {%
-        (data) => [data[0]]
-    %}
+    | %identifier {% id %}
+
+assignable
+    -> literal
+
 literal
-    -> %number {% id %}
-    | %string {% id %}
+    -> %string {% id %}
+    | %number {% id %}
+    | %bool {% id %}
     | %identifier {% id %}
-    | function_call {% id %}
-    | function_literal {% id %}
-    | array_literal {% id %}
     | object_literal {% id %}
-    | arithmetic_expression {% id %}
-    | null
-function_call
-    -> %identifier _ "(" _ params _ ")"
-    {%
-        (data) => {
-            return {
-                type: "function_call",
-                data: {
-                    identifier: data[0],
-                    params: data[4]
-                }
-            }
-        }
-    %}
-function_literal
-    -> "(" _ params _ ")" _ "=>" _ block_statement
-    {%
-        (data) => {
-            return {
-                type: "function_literal",
-                data: {
-                    params: data[2],
-                    block: data[8]
-                }
-            }
-        }
-    %}
-array_literal
-    -> "[" _ params _ "]"
-    {%
-        (data) => {
-            return {
-                type: "array_literal",
-                data: data[2]
-            }
-        }
-    %}
+    | array_literal {% id %}
+
 object_literal
-    -> "{" _ params _ "}"
+    -> "{" _ nl object:* _ "}"
     {%
-        (data) => {
-            return {
-                type: "object_literal",
-                data: data[2]
-            }
-        }
+        (data) => data[3]
     %}
 
-arithmetic_operand
-    -> %number {% id %}
-    | %identifier {% id %}
-arithmetic_operator
-    -> "/"
-    | "*"
-    | "+"
-    | "-"
-    | "%"
-
-block_statement
-    -> "{" %newline statements %newline "}"
+object
+    -> _ %identifier _ ":" _ literal nl
     {%
-        (data) => {
-            return {
-                type: "block_statement",
-                data: data[2]
-            }
-        }
+        (data) => [data[1], data[5]]
     %}
 
-params
-    -> params _ delimeter _ literal
+array_literal
+    -> "[" _ nl array:* _ "]"
     {%
-        (data) => [...data[0], data[4]]
+        (data) => data[3]
     %}
-    | literal
-    {%
-        (data) => [data[0]]
-    %}
-    | null
 
-delimeter
-    -> ","
-    | __
-__ -> %wspace
-_ -> __ | null
+array
+    -> _ literal _ ",":? _ nl
+    {%
+        (data) => data[1]
+    %}
+
+comment_statement
+    -> _ %comment _
+
+_ -> %wspace:?
+nl -> %newline:?

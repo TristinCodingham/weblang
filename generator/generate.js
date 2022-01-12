@@ -2,16 +2,19 @@ const fs = require('fs').promises;
 const path = require('path');
 
 async function main() {
+    // Input - *.ast
     const filename = process.argv[2];
-    const outputPath = path.join("public", "assets", path.basename(filename.replace("ast", "js")));
     if(!filename) {
         console.warn("Provide a .ast filename");
         return;
     }
-    
     const astJson = (await fs.readFile(path.normalize(filename))).toString();
     if(!astJson)
         return;
+    
+    // Output path
+    const outputPath = path.join("public", "static", path.basename(filename.replace("ast", "js")));
+    
     const inputs = JSON.parse(astJson);
     const jsCode = generator(inputs);
     await fs.writeFile(outputPath, jsCode);
@@ -20,7 +23,6 @@ async function main() {
 
 function generator(inputs) {
     const lines = [];
-    console.log(inputs)
     return lines.join("\n");
 }
 

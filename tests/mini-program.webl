@@ -1,6 +1,0 @@
-content myString = "Hello world!"
-char myChar = 'A'
-number myNum = 204
-func myFunc = ()
-func myFuncWithParams = (abc "hello" myFunc())
-feedback()
